@@ -9,3 +9,4 @@ __pycache__/
 .secrets.env
 .instance.env
 data/
+scripts/nebius/.*.env

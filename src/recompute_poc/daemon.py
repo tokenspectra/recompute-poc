@@ -61,7 +61,7 @@ async def score_one(
         return
     s = score_workunit(wu, rows, cfg.delta_max)
     store.save_score(workunit_id, wu.model, wu.params.temperature, s.n_tokens, s.match_rate,
-                     s.mean_margin, s.filtered_rate, cfg.delta_max)
+                     s.mean_margin, s.filtered_rate, cfg.delta_max, s.margins)
 
 
 def create_app(store: Store, cfg: DaemonConfig, http: httpx.AsyncClient | None = None,

@@ -15,6 +15,10 @@ from .store import Store, chunk_windows
 WINDOWS = {"5m": 300, "15m": 900, "1h": 3600, "6h": 21600, "24h": 86400}
 
 
+def _fmt(v: float | None, digits: int = 4) -> str:
+    return "  n/a " if v is None else f"{v:.{digits}f}"
+
+
 def calibrate(store: Store, model: str, window_tokens: int, quantile: float,
               delta_max: float, min_windows: int = 20) -> dict[str, object]:
     """tau = a high quantile of the honest windowed mean margin (see docs/design)."""
@@ -82,6 +86,15 @@ def main(argv: Sequence[str] | None = None) -> None:
     q.add_argument("--window-tokens", type=int, default=512)
     q.add_argument("--json", action="store_true")
 
+    ev = sub.add_parser("evaluate", help="honest vs control: tokens needed to detect")
+    ev.add_argument("--honest-db", type=Path, required=True)
+    ev.add_argument("--test-db", type=Path, required=True)
+    ev.add_argument("--model", required=True)
+    ev.add_argument("--sizes", default="32,64,128,256,512,1024,2048")
+    ev.add_argument("--quantile", type=float, default=0.999)
+    ev.add_argument("--min-windows", type=int, default=20)
+    ev.add_argument("--json", action="store_true")
+
     ld = sub.add_parser("load", help="run the load suite against the gateway")
     ld.add_argument("--url", required=True)
     ld.add_argument("--model", required=True)
@@ -119,6 +132,24 @@ def main(argv: Sequence[str] | None = None) -> None:
     elif a.cmd == "calibrate":
         print(json.dumps(calibrate(Store(a.db), a.model, a.window_tokens, a.quantile,
                                    a.delta_max, a.min_windows), indent=2))
+    elif a.cmd == "evaluate":
+        from .evaluate import evaluate
+        honest_m = Store(a.honest_db).token_margins(a.model)
+        test_m = Store(a.test_db).token_margins(a.model)
+        sizes = [int(x) for x in a.sizes.split(",")]
+        rows = evaluate(honest_m, test_m, sizes, a.quantile, a.min_windows)
+        if a.json:
+            print(json.dumps({"honest_tokens": len(honest_m), "test_tokens": len(test_m),
+                              "rows": [r.__dict__ for r in rows]}, indent=2))
+        else:
+            print(f"honest tokens={len(honest_m)} control tokens={len(test_m)} "
+                  f"quantile={a.quantile}")
+            print("window  cal/hold/test  tau      FPR     TPR     AUC")
+            for r in rows:
+                print(f"{r.window_tokens:>6}  {r.cal_windows:>3}/{r.holdout_windows:>3}/"
+                      f"{r.test_windows:>3}    {_fmt(r.tau)}  {_fmt(r.fpr, 3)}  "
+                      f"{_fmt(r.tpr, 3)}  {_fmt(r.auc, 3)}"
+                      + ("  (too few windows)" if r.tau is None else ""))
     elif a.cmd == "stats":
         st = Store(a.db)
         stats = st.window_stats(WINDOWS[a.window], a.model)

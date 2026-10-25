@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import threading
 import time
@@ -20,7 +21,8 @@ CREATE INDEX IF NOT EXISTS wu_status ON workunits(status);
 CREATE TABLE IF NOT EXISTS scores (
   workunit_id TEXT PRIMARY KEY, scored_at REAL NOT NULL, model TEXT NOT NULL,
   temperature REAL NOT NULL, n_tokens INTEGER NOT NULL, match_rate REAL NOT NULL,
-  mean_margin REAL NOT NULL, filtered_rate REAL NOT NULL, delta_max REAL NOT NULL);
+  mean_margin REAL NOT NULL, filtered_rate REAL NOT NULL, delta_max REAL NOT NULL,
+  margins TEXT NOT NULL DEFAULT '[]');
 CREATE INDEX IF NOT EXISTS sc_time ON scores(scored_at);
 CREATE TABLE IF NOT EXISTS thresholds (
   model TEXT PRIMARY KEY, tau REAL NOT NULL, delta_max REAL NOT NULL,
@@ -76,15 +78,24 @@ class Store:
     def save_score(
         self, workunit_id: str, model: str, temperature: float, n_tokens: int,
         match_rate: float, mean_margin: float, filtered_rate: float, delta_max: float,
+        margins: Sequence[float] = (),
     ) -> None:
         with self._lock, self._db:
             self._db.execute(
-                "INSERT OR REPLACE INTO scores VALUES (?,?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO scores VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (workunit_id, time.time(), model, temperature, n_tokens, match_rate,
-                 mean_margin, filtered_rate, delta_max))
+                 mean_margin, filtered_rate, delta_max, json.dumps(list(margins))))
             self._db.execute(
                 "UPDATE workunits SET status='scored', reason=NULL WHERE workunit_id=?",
                 (workunit_id,))
+
+    def token_margins(self, model: str) -> list[float]:
+        """Every scored output token's margin for `model`, in scoring order."""
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT margins FROM scores WHERE model=? ORDER BY scored_at, rowid",
+                (model,)).fetchall()
+        return [float(m) for r in rows for m in json.loads(str(r[0]))]
 
     def counts(self) -> dict[str, int]:
         with self._lock:

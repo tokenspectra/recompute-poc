@@ -34,6 +34,7 @@ class WorkunitScore:
     match_rate: float
     mean_margin: float
     filtered_rate: float
+    margins: tuple[float, ...] = ()  # per output token, clipped at delta_max
 
 
 def _keep_mask(logits: np.ndarray, p: SamplingParams) -> np.ndarray:
@@ -127,4 +128,5 @@ def score_workunit(
         match_rate=sum(s.match for s in scores) / n,
         mean_margin=sum(s.margin for s in scores) / n,
         filtered_rate=sum(s.filtered for s in scores) / n,
+        margins=tuple(s.margin for s in scores),
     )

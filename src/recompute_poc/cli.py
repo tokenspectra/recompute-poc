@@ -82,8 +82,24 @@ def main(argv: Sequence[str] | None = None) -> None:
     q.add_argument("--window-tokens", type=int, default=512)
     q.add_argument("--json", action="store_true")
 
+    ld = sub.add_parser("load", help="run the load suite against the gateway")
+    ld.add_argument("--url", required=True)
+    ld.add_argument("--model", required=True)
+    ld.add_argument("--per-cell", type=int, default=32)
+    ld.add_argument("--max-tokens", type=int, default=256)
+    ld.add_argument("--label", default="honest")
+    ld.add_argument("--out", type=Path, default=Path("data/load.jsonl"))
+    ld.add_argument("--quick", action="store_true", help="concurrency 1 and 8 only")
+
     a = ap.parse_args(argv)
-    if a.cmd == "gateway":
+    if a.cmd == "load":
+        import asyncio
+
+        from .loadsuite import matrix, run_suite
+        a.out.parent.mkdir(parents=True, exist_ok=True)
+        cells = matrix((1, 8) if a.quick else (1, 8, 32))
+        asyncio.run(run_suite(a.url, a.model, a.per_cell, a.max_tokens, a.label, a.out, cells))
+    elif a.cmd == "gateway":
         from .gateway import GatewayConfig, ModelRoute, create_app
         raw = json.loads(a.config.read_text())
         cfg = GatewayConfig(

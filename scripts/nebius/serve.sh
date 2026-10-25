@@ -33,7 +33,7 @@ m = {
   "image": inspect["Config"]["Image"], "image_id": inspect["Image"], "args": args,
   "env": sorted(e for e in inspect["Config"]["Env"] if e.startswith("VLLM_")),
   "model": declared,
-  "v2_runner_logged": "model runner v2" in text.lower(),
+  "v2_runner_logged": "using v2 model runner" in text.lower(),
 }
 m["manifest_id"] = hashlib.sha256(json.dumps(m, sort_keys=True).encode()).hexdigest()[:16]
 m["actual_model"] = actual  # not part of the hash: this is what a lying operator would hide

@@ -1,4 +1,4 @@
-"""The Request Workunit as captured by the API Tap (TS-15 contract)."""
+"""The Request Workunit as captured by the API Tap."""
 
 from __future__ import annotations
 

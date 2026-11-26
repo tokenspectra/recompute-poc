@@ -1,0 +1,11 @@
+recompute-poc
+Copyright 2026 TokenSpectra
+
+This product includes software developed by TokenSpectra, licensed under the
+Apache License, Version 2.0 (see LICENSE).
+
+src/recompute_poc/gumbel.py is a NumPy port of
+vllm/v1/worker/gpu/sample/gumbel.py from vLLM v0.32.0 (commit 5df63a7),
+Copyright contributors to the vLLM project, licensed under the Apache License,
+Version 2.0. It was modified: rewritten from Triton to NumPy for CPU replay.
+https://github.com/vllm-project/vllm

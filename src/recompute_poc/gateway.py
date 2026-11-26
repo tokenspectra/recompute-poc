@@ -1,6 +1,6 @@
 """API Tap gateway (VM-A): injects seed/logprobs/token ids, strips them, spools Workunits.
 
-Contract: TS-15 resolution. Chat completions only, vLLM adapter only.
+Scope: chat completions only, vLLM adapter only.
 """
 
 from __future__ import annotations

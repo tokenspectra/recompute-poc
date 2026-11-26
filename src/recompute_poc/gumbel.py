@@ -2,8 +2,11 @@
 
 Source: vllm/v1/worker/gpu/sample/gumbel.py at tag v0.32.0 (5df63a7). The noise is a
 stateless murmur3 hash of (seed, pos, token id), so it can be replayed without the
-server. UNVERIFIED against the real Triton kernel until `scripts/validate_gumbel.py`
-passes on a GPU box with the pinned image; ULP differences in log/FMA are possible.
+server. Validated against the real Triton kernel on an H100 with the pinned image
+(`scripts/validate_gumbel.py`: 6000/6000 identical, see docs/results-20261025.md).
+
+Ported from vLLM (https://github.com/vllm-project/vllm), Copyright contributors to the
+vLLM project, Apache License 2.0. Modified: rewritten from Triton to NumPy. See NOTICE.
 """
 
 from __future__ import annotations

@@ -1,5 +1,7 @@
 """Fast-path scorer: verified sampling (match) + Token-DiFR (margin) in one replay.
 
+Token-DiFR: Karvonen et al., 2025, https://arxiv.org/abs/2511.20621
+
 Works on sparse rows (top-20 logprobs from teacher-forced prefill). That is exact for
 top_k <= 20 because the Gumbel argmax only ever runs over the top-k set, and the
 per-row logsumexp that separates logprobs from logits cancels in every margin.
